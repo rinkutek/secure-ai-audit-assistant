@@ -1,0 +1,23 @@
+{
+  "routes": [
+    {
+      "route": "/*",
+      "serve": "index.html",
+      "statusCode": 200
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": []
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "index.html"
+  },
+  "responseOverrides": {
+    "400": "index.html",
+    "404": "index.html"
+  },
+  "auth": {
+    "identityProviders": []
+  }
+}
