@@ -86,8 +86,12 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Update Web App container image
-        if: ${{ secrets.AZURE_WEBAPP_NAME != '' }}
+        continue-on-error: true
         run: |
+          if [ -z "${{ secrets.AZURE_WEBAPP_NAME }}" ]; then
+            echo "AZURE_WEBAPP_NAME not set, skipping deployment"
+            exit 0
+          fi
           ACR_LOGIN=$(az acr show --name ${{ secrets.ACR_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --query loginServer -o tsv)
           IMAGE=$ACR_LOGIN/backend:${{ github.sha }}
           echo "Setting webapp ${{ secrets.AZURE_WEBAPP_NAME }} to use image $IMAGE"
@@ -113,6 +117,7 @@ jobs:
 
       - name: Deploy to Azure Static Web Apps
         if: ${{ secrets.AZURE_STATIC_WEBAPPS_API_TOKEN != '' }}
+        continue-on-error: true
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEBAPPS_API_TOKEN }}
