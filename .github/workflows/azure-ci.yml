@@ -116,7 +116,6 @@ jobs:
           npm run build
 
       - name: Deploy to Azure Static Web Apps
-        if: ${{ secrets.AZURE_STATIC_WEBAPPS_API_TOKEN != '' }}
         continue-on-error: true
         uses: Azure/static-web-apps-deploy@v1
         with:
