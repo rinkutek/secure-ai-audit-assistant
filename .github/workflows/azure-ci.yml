@@ -17,8 +17,6 @@ env:
   RESOURCE_GROUP: secure-ai-rg
   ACR_NAME: ${{ secrets.ACR_NAME }}
   ACR_IMAGE_PREFIX: ${{ secrets.ACR_NAME }}.azurecr.io/secureai
-  AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-  AZURE_STATIC_WEBAPPS_API_TOKEN: ${{ secrets.AZURE_STATIC_WEBAPPS_API_TOKEN }}
 
 jobs:
   test-backend:
@@ -78,7 +76,6 @@ jobs:
   deploy-backend:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ env.AZURE_WEBAPP_NAME != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,21 +86,16 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Update Web App container image
+        if: ${{ secrets.AZURE_WEBAPP_NAME != '' }}
         run: |
-          ACR_LOGIN=$(az acr show --name ${{ env.ACR_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --query loginServer -o tsv)
+          ACR_LOGIN=$(az acr show --name ${{ secrets.ACR_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --query loginServer -o tsv)
           IMAGE=$ACR_LOGIN/backend:${{ github.sha }}
           echo "Setting webapp ${{ secrets.AZURE_WEBAPP_NAME }} to use image $IMAGE"
-          # Create the webapp if it doesn't exist (Linux container)
-          if ! az webapp show -n ${{ secrets.AZURE_WEBAPP_NAME }} -g ${{ env.RESOURCE_GROUP }} >/dev/null 2>&1; then
-            az webapp create -g ${{ env.RESOURCE_GROUP }} -p ${{ secrets.AZURE_APP_SERVICE_PLAN }} -n ${{ secrets.AZURE_WEBAPP_NAME }} --deployment-container-image-name $IMAGE
-          else
-            az webapp config container set -n ${{ secrets.AZURE_WEBAPP_NAME }} -g ${{ env.RESOURCE_GROUP }} --docker-custom-image-name $IMAGE
-          fi
+          az webapp config container set -n ${{ secrets.AZURE_WEBAPP_NAME }} -g ${{ env.RESOURCE_GROUP }} --docker-custom-image-name $IMAGE --docker-registry-server-url https://$ACR_LOGIN
 
   deploy-frontend-static:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ env.AZURE_STATIC_WEBAPPS_API_TOKEN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -120,6 +112,7 @@ jobs:
           npm run build
 
       - name: Deploy to Azure Static Web Apps
+        if: ${{ secrets.AZURE_STATIC_WEBAPPS_API_TOKEN != '' }}
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEBAPPS_API_TOKEN }}
