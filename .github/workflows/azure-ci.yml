@@ -17,6 +17,8 @@ env:
   RESOURCE_GROUP: secure-ai-rg
   ACR_NAME: ${{ secrets.ACR_NAME }}
   ACR_IMAGE_PREFIX: ${{ secrets.ACR_NAME }}.azurecr.io/secureai
+  AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+  AZURE_STATIC_WEBAPPS_API_TOKEN: ${{ secrets.AZURE_STATIC_WEBAPPS_API_TOKEN }}
 
 jobs:
   test-backend:
@@ -76,7 +78,7 @@ jobs:
   deploy-backend:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ secrets.AZURE_WEBAPP_NAME != '' }}
+    if: ${{ env.AZURE_WEBAPP_NAME != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -101,7 +103,7 @@ jobs:
   deploy-frontend-static:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ secrets.AZURE_STATIC_WEBAPPS_API_TOKEN != '' }}
+    if: ${{ env.AZURE_STATIC_WEBAPPS_API_TOKEN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
