@@ -58,7 +58,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${API_PORT:-8080}:8080"
+      - "${API_PORT:-8081}:8080"
     volumes:
       - ./backend:/app
       - ./data:/data

@@ -50,8 +50,7 @@ Install:
 Verify installation:
 
 ```bash
-docker --version
-docker compose version
+`
 ```
 
 ```bash
