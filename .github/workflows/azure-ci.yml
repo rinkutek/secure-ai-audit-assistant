@@ -19,7 +19,7 @@ env:
   ACR_IMAGE_PREFIX: ${{ secrets.ACR_NAME }}.azurecr.io/secureai
 
 jobs:
-  test-backend:
+  secure_ai_audit_backend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,10 +39,11 @@ jobs:
       - name: Run backend tests
         working-directory: backend
         run: |
-          if [ -d tests ]; then pytest -q; else echo "No backend tests found"; fi
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+          if [ -d tests ]; then pytest -q tests/; else echo "No backend tests found"; fi
 
   build-and-push:
-    needs: test-backend
+    needs: secure_ai_audit_backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
