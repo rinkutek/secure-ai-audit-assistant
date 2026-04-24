@@ -19,6 +19,8 @@ dist/
 # local data
 data/
 *.log
+webapp_logs*/
+*.zip
 
 # docker
 **/.docker/

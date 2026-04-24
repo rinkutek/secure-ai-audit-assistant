@@ -37,16 +37,16 @@ async def ingest_document(session: AsyncSession, *, title: str, filename: str, s
         session.add(ch); chunk_rows.append(ch)
     await session.flush()
 
-    embedder=get_embedding_provider()
-    vectors=await embedder.embed([c.content for c in chunk_rows])
-
-    chroma=ChromaHttpClient()
-    await chroma.upsert(
-        ids=[c.id for c in chunk_rows],
-        embeddings=vectors,
-        metadatas=[{"doc_id": c.doc_id, "chunk_id": c.id, "chunk_index": c.chunk_index} for c in chunk_rows],
-        documents=[c.content for c in chunk_rows],
-    )
+    if not settings.mock_mode:
+        embedder=get_embedding_provider()
+        vectors=await embedder.embed([c.content for c in chunk_rows])
+        chroma=ChromaHttpClient()
+        await chroma.upsert(
+            ids=[c.id for c in chunk_rows],
+            embeddings=vectors,
+            metadatas=[{"doc_id": c.doc_id, "chunk_id": c.id, "chunk_index": c.chunk_index} for c in chunk_rows],
+            documents=[c.content for c in chunk_rows],
+        )
 
     model = settings.openai_embedding_model if not settings.mock_mode else "mock-embeddings"
     for c in chunk_rows:

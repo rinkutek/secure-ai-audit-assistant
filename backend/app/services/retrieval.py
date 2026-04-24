@@ -17,6 +17,8 @@ def _minmax(scores: List[float]) -> List[float]:
 async def bm25_keyword_search(session: AsyncSession, *, query: str, top_k: int) -> List[Dict[str, Any]]:
     res = await session.execute(select(DocumentChunk.id, DocumentChunk.doc_id, DocumentChunk.chunk_index, DocumentChunk.content))
     rows = res.all()
+    if not rows:
+        return []
     corpus = [r[3] for r in rows]
     bm25 = BM25Okapi([_tokenize(t) for t in corpus])
     scores = bm25.get_scores(_tokenize(query))
@@ -29,7 +31,8 @@ async def bm25_keyword_search(session: AsyncSession, *, query: str, top_k: int) 
 def hybrid_merge_rerank(*, semantic: List[Dict[str, Any]], keyword: List[Dict[str, Any]], alpha: float, top_k: int) -> List[Dict[str, Any]]:
     sem_sim=[1.0/(1.0+float(r.get("distance",1.0))) for r in semantic]
     sem_n=_minmax(sem_sim)
-    kw_n=_minmax([float(r.get("score",0.0)) for r in keyword])
+    kw_raw = [float(r.get("score", 0.0)) for r in keyword]
+    kw_n=_minmax(kw_raw)
 
     merged={}
     for i,r in enumerate(semantic):

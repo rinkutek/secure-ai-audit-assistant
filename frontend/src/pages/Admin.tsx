@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { apiUsers, apiPolicies } from '../api'
+import { apiUsers, apiPolicies, apiUploadDocument } from '../api'
 import { getAccessToken } from '../auth'
 
 export default function Admin() {
   const [users, setUsers] = useState<any[]>([])
   const [policies, setPolicies] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [uploadBusy, setUploadBusy] = useState(false)
+  const [uploadTitle, setUploadTitle] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
 
   async function load() {
     setError(null)
@@ -15,6 +18,21 @@ export default function Admin() {
       const [u, p] = await Promise.all([apiUsers(token), apiPolicies(token)])
       setUsers(u); setPolicies(p)
     } catch (e:any) { setError(e.message || 'Failed') }
+  }
+
+  async function handleUpload(e: React.FormEvent) {
+    e.preventDefault()
+    if (!uploadFile) return
+    setUploadBusy(true); setError(null)
+    try {
+      const token = getAccessToken()
+      if (!token) throw new Error('Please login first.')
+      await apiUploadDocument(token, uploadFile, uploadTitle || uploadFile.name)
+      setUploadTitle(''); setUploadFile(null)
+      alert('Upload successful!')
+      load()
+    } catch (e:any) { setError(e.message || 'Upload failed') }
+    finally { setUploadBusy(false) }
   }
 
   useEffect(() => { load() }, [])
@@ -27,7 +45,18 @@ export default function Admin() {
           <button className="btn secondary" onClick={load}>Refresh</button>
         </div>
         {error && <div className="small" style={{color:'crimson'}}>{error}</div>}
-        <div className="small">Minimal admin view for local dev.</div>
+        <div className="small">Manage users, policies, and documents.</div>
+      </div>
+
+      <div className="card">
+        <h4 style={{marginTop:0}}>Upload Document</h4>
+        <form onSubmit={handleUpload} style={{display:'grid', gap:8}}>
+          <input className="input" placeholder="Document Title" value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} />
+          <input type="file" onChange={e => setUploadFile(e.target.files?.[0] || null)} />
+          <button className="btn" type="submit" disabled={uploadBusy || !uploadFile}>
+            {uploadBusy ? 'Uploading...' : 'Upload'}
+          </button>
+        </form>
       </div>
 
       <div className="card">

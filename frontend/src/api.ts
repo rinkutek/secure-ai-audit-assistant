@@ -36,3 +36,16 @@ export async function apiPolicies(accessToken: string) {
   if (!r.ok) throw new Error((await r.json()).detail || 'Policies failed')
   return r.json()
 }
+
+export async function apiUploadDocument(accessToken: string, file: File, title: string) {
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('title', title)
+  const r = await fetch(`${API_BASE}/documents/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: fd
+  })
+  if (!r.ok) throw new Error((await r.json()).detail || 'Upload failed')
+  return r.json()
+}
