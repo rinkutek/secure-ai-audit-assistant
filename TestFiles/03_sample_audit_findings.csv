@@ -1,0 +1,6 @@
+finding_id,category,severity,owner,status,description,recommendation
+F-001,Access Control,High,Security Team,Open,Admin role assigned to 4 users without documented approval,Review admin access and require approval evidence
+F-002,Logging,Medium,Platform Team,In Progress,AI query logs retained for only 7 days though policy requires 90 days,Update retention policy and storage lifecycle
+F-003,Secrets Management,High,DevOps,Open,API key stored as plain environment variable instead of Key Vault,Move secrets to Azure Key Vault and rotate exposed keys
+F-004,Data Privacy,Medium,Compliance,Open,No masking detected for employee SSNs in uploaded HR document,Add PII detection and masking before indexing
+F-005,Incident Response,Low,IT Ops,Closed,Runbook missing escalation contact for AI system outage,Add escalation contact and review quarterly
