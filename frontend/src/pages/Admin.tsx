@@ -151,7 +151,7 @@ export default function Admin() {
         <h3 style={{ marginTop: 0, marginBottom: 16 }}>Directory of Identities</h3>
         <div style={{ overflowX: 'auto' }}>
           <table className="table">
-            <thead><tr><th>Email Address</th><th>Assigned Capabilities</th><th>Status</th><th>UUID</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Email Address</th><th>Assigned Capabilities</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               {users.map((u: any) => (
                 <tr key={u.id}>
@@ -175,7 +175,6 @@ export default function Admin() {
                       <span style={{ color: 'var(--text-muted)' }}>Suspended</span>
                     }
                   </td>
-                  <td><code>{u.id.substring(0, 8)}...</code></td>
                   <td>
                     <div className="row" style={{ gap: 8 }}>
                       <button className="btn secondary" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { setEditingUserId(u.id); setEditRolesInput(u.roles.join(', ')) }}>Edit</button>
@@ -194,14 +193,21 @@ export default function Admin() {
         {documents.length === 0 ? <div className="small" style={{ opacity: 0.5 }}>No documents in vault.</div> : (
           <div style={{ overflowX: 'auto' }}>
             <table className="table">
-              <thead><tr><th>Title</th><th>Filename</th><th>Upload Date</th><th>UUID</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Sl. No.</th><th>Filename</th><th>Upload Date</th><th>Document Hash ID</th><th>Actions</th></tr></thead>
               <tbody>
-                {documents.map((d: any) => (
+                {documents.map((d: any, index: number) => (
                   <tr key={d.id}>
-                    <td style={{ fontWeight: 500, color: 'var(--text-main)' }}>{d.title}</td>
+                    <td style={{ fontWeight: 500, color: 'var(--text-main)' }}>{index + 1}</td>
                     <td className="small">{d.filename}</td>
                     <td className="small">{new Date(d.created_at).toLocaleDateString()}</td>
-                    <td><code>{d.id.substring(0, 8)}...</code></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <code>{d.id.substring(0, 8)}...</code>
+                        <button className="btn secondary" onClick={() => { navigator.clipboard.writeText(d.id); alert('Document Hash ID copied to clipboard!'); }} style={{ padding: 4, background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} title="Copy Full Document Hash ID">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                      </div>
+                    </td>
                     <td>
                       <button className="btn secondary" style={{ fontSize: 12, padding: '4px 8px', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }} onClick={() => handleDeleteDocument(d.id)}>Delete</button>
                     </td>
