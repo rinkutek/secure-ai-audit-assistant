@@ -30,8 +30,18 @@ class MockLLMProvider(LLMProvider):
 
 class OpenAICompatibleLLMProvider(LLMProvider):
     async def answer(self, *, question: str, context_chunks: List[Dict[str, Any]]) -> str:
-        url = settings.openai_base_url.rstrip('/') + '/chat/completions'
-        headers = {'Authorization': f'Bearer {settings.openai_api_key}'}
+        if settings.azure_openai_endpoint:
+            url = f"{settings.azure_openai_endpoint.rstrip('/')}/openai/deployments/{settings.azure_openai_deployment}/chat/completions?api-version={settings.azure_openai_api_version}"
+            headers = {'api-key': settings.azure_openai_key}
+        else:
+            url = settings.openai_base_url.rstrip('/') + '/chat/completions'
+            headers = {
+                'Authorization': f'Bearer {settings.openai_api_key}',
+                'HTTP-Referer': 'https://github.com/secure-ai-audit-assistant',
+                'X-Title': 'Secure AI Audit Assistant'
+            }
+        
+        print(f"DEBUG: Calling LLM at {url}", flush=True)
         context = "\n\n".join(f"[{ch['citation']}]\n{ch['content']}" for ch in context_chunks)
         body = {
             "model": settings.openai_chat_model,
@@ -44,9 +54,12 @@ class OpenAICompatibleLLMProvider(LLMProvider):
         try:
             async with httpx.AsyncClient(timeout=settings.llm_request_timeout_seconds) as client:
                 r = await client.post(url, headers=headers, json=body)
+            if r.status_code != 200:
+                print(f"LLM Error ({r.status_code}): {r.text}", flush=True)
             r.raise_for_status()
             return r.json()["choices"][0]["message"]["content"]
-        except Exception:
+        except Exception as e:
+            print(f"LLM Exception: {str(e)}", flush=True)
             raise AppError("LLM provider unavailable", status_code=HTTP_503_SERVICE_UNAVAILABLE, code="LLM_UNAVAILABLE")
 
 def get_llm_provider() -> LLMProvider:

@@ -51,13 +51,13 @@ class RBACGraph:
                         s_props = dict(record['source_props'])
                         if 'id' in s_props:
                             s_props['app_id'] = s_props.pop('id')
-                        nodes[sid] = {"id": sid, "label": record['source_label'], **s_props}
+                        nodes[sid] = {"id": sid, "label": record['source_label'], "type": record['source_label'], **s_props}
                         
                     if tid not in nodes:
                         t_props = dict(record['target_props'])
                         if 'id' in t_props:
                             t_props['app_id'] = t_props.pop('id')
-                        nodes[tid] = {"id": tid, "label": record['target_label'], **t_props}
+                        nodes[tid] = {"id": tid, "label": record['target_label'], "type": record['target_label'], **t_props}
                         
                     links.append({
                         "source": sid,

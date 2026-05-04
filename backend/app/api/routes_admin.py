@@ -7,7 +7,7 @@ from app.api.deps import get_db, require_admin
 from app.core.security import hash_password
 from app.core.exceptions import AppError
 from app.db.models import User, Role, UserRole, AccessPolicy
-from app.schemas.admin import UserCreate, UserOut, UserUpdateRoles, RoleCreate, RoleOut, PolicyCreate, PolicyOut
+from app.schemas.admin import UserCreate, UserOut, UserUpdateRoles, RoleCreate, RoleOut, PolicyCreate, PolicyOut, GraphData
 from app.services.audit_log import write_audit_log
 from app.services.neo4j_rbac import RBACGraph
 
@@ -144,7 +144,3 @@ async def delete_policy(policy_id: str, db: AsyncSession = Depends(get_db), admi
     await db.commit()
     return {"ok": True}
 
-@router.get("/graph")
-async def get_graph(admin=Depends(require_admin)):
-    graph_svc = RBACGraph()
-    return await graph_svc.get_full_graph()
