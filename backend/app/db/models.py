@@ -74,3 +74,21 @@ class AuditLog(Base):
     roles: Mapped[str] = mapped_column(String(512), nullable=False)
     hash_prev: Mapped[str] = mapped_column(String(64), nullable=False)
     hash_curr: Mapped[str] = mapped_column(String(64), nullable=False)
+
+class ChatSession(Base):
+    __tablename__="chat_sessions"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False, default="New Chat")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    messages: Mapped[list["ChatMessage"]] = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
+
+class ChatMessage(Base):
+    __tablename__="chat_messages"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    session_id: Mapped[str] = mapped_column(String(36), ForeignKey("chat_sessions.id", ondelete="CASCADE"), index=True, nullable=False)
+    role: Mapped[str] = mapped_column(String(16), nullable=False) # 'user' or 'assistant'
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    citations: Mapped[str] = mapped_column(Text, nullable=False, default="[]") # JSON encoded citations
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    session: Mapped["ChatSession"] = relationship("ChatSession", back_populates="messages")

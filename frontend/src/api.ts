@@ -17,9 +17,50 @@ export async function apiLogin(email: string, password: string): Promise<Tokens>
   return r.json()
 }
 
-export async function apiQuery(accessToken: string, query: string) {
-  const r = await fetch(`${API_BASE}/query`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` }, body: JSON.stringify({ query }) })
+export async function apiQuery(accessToken: string, query: string, sessionId?: string) {
+  const body: any = { query }
+  if (sessionId) body.session_id = sessionId
+  const r = await fetch(`${API_BASE}/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(body)
+  })
   if (!r.ok) throw new Error(parseError(await r.json(), 'Query failed'))
+  return r.json()
+}
+
+export async function apiQueryHistory(accessToken: string) {
+  const r = await fetch(`${API_BASE}/chat/sessions`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Failed to fetch chat sessions'))
+  return r.json()
+}
+
+export async function apiGetChatSession(accessToken: string, sessionId: string) {
+  const r = await fetch(`${API_BASE}/chat/session/${sessionId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Failed to fetch chat session'))
+  return r.json()
+}
+
+export async function apiRenameSession(accessToken: string, sessionId: string, title: string) {
+  const r = await fetch(`${API_BASE}/chat/session/${sessionId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ title })
+  })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Failed to rename session'))
+  return r.json()
+}
+
+export async function apiDeleteSession(accessToken: string, sessionId: string) {
+  const r = await fetch(`${API_BASE}/chat/session/${sessionId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` }
+  })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Failed to delete session'))
   return r.json()
 }
 
@@ -33,6 +74,30 @@ export async function apiVerifyAudit(accessToken: string) {
   const r = await fetch(`${API_BASE}/audit-logs/verify`, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } })
   if (!r.ok) throw new Error(parseError(await r.json(), 'Verify failed'))
   return r.json()
+}
+
+export async function apiFlushAuditLogs(accessToken: string) {
+  const r = await fetch(`${API_BASE}/audit-logs/flush`, { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Flush failed'))
+  return r.json()
+}
+
+export async function apiExportAuditLogs(accessToken: string, format: 'csv' | 'json' = 'csv') {
+  const r = await fetch(`${API_BASE}/audit-logs/export?format=${format}`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${accessToken}` }
+  })
+  if (!r.ok) throw new Error('Failed to export logs')
+  
+  const blob = await r.blob()
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `audit-logs-export.${format}`
+  document.body.appendChild(a)
+  a.click()
+  window.URL.revokeObjectURL(url)
+  document.body.removeChild(a)
 }
 
 export async function apiUsers(accessToken: string) {

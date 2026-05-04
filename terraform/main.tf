@@ -117,6 +117,15 @@ resource "azurerm_container_app" "backend" {
     allow_insecure_connections = false
     external_enabled           = true
     target_port                = 8080
+
+    cors {
+      allowed_origins = ["*"]
+      allowed_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"]
+      allowed_headers = ["*"]
+      expose_headers  = ["*"]
+      max_age         = 3600
+    }
+
     traffic_weight {
       percentage      = 100
       latest_revision = true
