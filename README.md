@@ -42,6 +42,9 @@ Everything runs locally using Docker Compose.
 
 ## 1) Prerequisites
 
+> **☁️ Migrating to the Cloud?** 
+> If you want to deploy this stack to Microsoft Azure using a cloud-native serverless architecture, see the [Azure Migration Guide](./AZURE_MIGRATION.md) and the `azure-deploy.sh` script.
+
 Install:
 
 - Docker Desktop (includes Docker Compose v2)

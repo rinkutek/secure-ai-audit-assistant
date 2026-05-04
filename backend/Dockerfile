@@ -7,4 +7,4 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 EXPOSE 8080
-CMD ["bash","-lc","uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"]
+CMD ["bash","-lc","alembic upgrade head && python -m app.scripts.seed && uvicorn app.main:app --host 0.0.0.0 --port 8080"]

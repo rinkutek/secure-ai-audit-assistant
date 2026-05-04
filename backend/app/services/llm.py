@@ -64,9 +64,12 @@ class OpenAICompatibleLLMProvider(LLMProvider):
         try:
             async with httpx.AsyncClient(timeout=settings.llm_request_timeout_seconds) as client:
                 r = await client.post(url, headers=headers, json=body)
+            if r.status_code != 200:
+                print(f"LLM Error ({r.status_code}): {r.text}", flush=True)
             r.raise_for_status()
             return r.json()["choices"][0]["message"]["content"]
-        except Exception:
+        except Exception as e:
+            print(f"LLM Exception: {str(e)}", flush=True)
             raise AppError("LLM provider unavailable", status_code=HTTP_503_SERVICE_UNAVAILABLE, code="LLM_UNAVAILABLE")
 
 def get_llm_provider() -> LLMProvider:

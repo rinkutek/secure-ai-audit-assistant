@@ -32,11 +32,18 @@ class Settings(BaseSettings):
     hybrid_alpha: float = Field(default=0.65, alias="HYBRID_ALPHA")
 
     mock_mode: bool = Field(default=True, alias="MOCK_MODE")
+    mock_embeddings: bool = Field(default=True, alias="MOCK_EMBEDDINGS")
     openai_base_url: str = Field(default="http://localhost:11434/v1", alias="OPENAI_BASE_URL")
     openai_api_key: str = Field(default="local-dev", alias="OPENAI_API_KEY")
     openai_chat_model: str = Field(default="gpt-4o-mini", alias="OPENAI_CHAT_MODEL")
     openai_embedding_model: str = Field(default="text-embedding-3-small", alias="OPENAI_EMBEDDING_MODEL")
     llm_request_timeout_seconds: int = Field(default=30, alias="LLM_REQUEST_TIMEOUT_SECONDS")
+
+    # Azure OpenAI specific
+    azure_openai_endpoint: str = Field(default="", alias="AZURE_OPENAI_ENDPOINT")
+    azure_openai_key: str = Field(default="", alias="AZURE_OPENAI_KEY")
+    azure_openai_deployment: str = Field(default="", alias="AZURE_OPENAI_DEPLOYMENT")
+    azure_openai_api_version: str = Field(default="2024-02-15-preview", alias="AZURE_OPENAI_API_VERSION")
 
     doc_storage_dir: str = Field(default="/data/documents", alias="DOC_STORAGE_DIR")
 

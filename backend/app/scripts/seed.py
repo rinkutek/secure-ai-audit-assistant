@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+import sys
 from pathlib import Path
 from sqlalchemy import select
 from neo4j import AsyncGraphDatabase
@@ -93,10 +94,53 @@ async def seed_neo4j(users, doc_ids):
             await session.run("MATCH (r:Role {name:'admin'}),(d:Document {id:$d}) MERGE (r)-[:CAN_ACCESS {permission:'READ'}]->(d)", d=did)
     await driver.close()
 
+async def wait_for_services():
+    import urllib.request
+    
+    def log(msg):
+        print(msg, file=sys.stderr, flush=True)
+
+    log("🔍 Starting robust service health checks...")
+    
+    # Wait for ChromaDB (HTTP check)
+    url = settings.chroma_http_url.rstrip("/")
+    log(f"🌐 Checking ChromaDB at {url}...")
+    
+    for i in range(20):
+        try:
+            # We check the heartbeat or version endpoint
+            with urllib.request.urlopen(f"{url}/api/v1/heartbeat", timeout=2) as response:
+                if response.status == 200:
+                    log("✅ ChromaDB is healthy and responding.")
+                    break
+        except Exception as e:
+            log(f"⏳ Waiting for ChromaDB... (Attempt {i+1}/20) - Error: {e}")
+            await asyncio.sleep(5)
+    else:
+        log("❌ ChromaDB failed to become healthy in time.")
+        sys.exit(1)
+
+    # Wait for Neo4j (Driver check)
+    log(f"🌐 Checking Neo4j at {settings.neo4j_uri}...")
+    for i in range(20):
+        try:
+            driver = AsyncGraphDatabase.driver(settings.neo4j_uri, auth=(settings.neo4j_user, settings.neo4j_password))
+            await driver.verify_connectivity()
+            await driver.close()
+            log("✅ Neo4j is healthy.")
+            break
+        except Exception as e:
+            log(f"⏳ Waiting for Neo4j... (Attempt {i+1}/20) - Error: {e}")
+            await asyncio.sleep(5)
+    else:
+        log("❌ Neo4j failed to become healthy in time.")
+        sys.exit(1)
+
 async def main():
+    await wait_for_services()
     users, doc_ids = await seed_postgres()
     await seed_neo4j(users, doc_ids)
-    print("Seed complete.")
+    print("Seed complete.", file=sys.stderr, flush=True)
     print("Login users:")
     print(" admin@example.com / AdminPass123!")
     print(" auditor@example.com / AuditorPass123!")

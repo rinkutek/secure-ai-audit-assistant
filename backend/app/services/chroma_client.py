@@ -23,8 +23,12 @@ class ChromaHttpClient:
         # url will be http://host:port
         try:
             scheme, rest = url.split("://", 1)
-            host, port_s = rest.split(":", 1)
-            port = int(port_s)
+            if ":" in rest:
+                host, port_s = rest.split(":", 1)
+                port = int(port_s)
+            else:
+                host = rest
+                port = 80 if scheme == "http" else 443
         except Exception as e:
             raise AppError(
                 f"Invalid CHROMA_HTTP_URL: {settings.chroma_http_url}",
@@ -35,6 +39,7 @@ class ChromaHttpClient:
         self._client = chromadb.HttpClient(
             host=host,
             port=port,
+            ssl=(scheme == "https"),
             settings=ChromaSettings(
                 anonymized_telemetry=False,
                 allow_reset=False,

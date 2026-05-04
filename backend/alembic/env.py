@@ -10,7 +10,7 @@ from app.db import models  # noqa: F401
 config = context.config
 # Use sync URL for migrations
 #config.set_main_option("sqlalchemy.url", settings.database_url.replace("+asyncpg",""))
-sync_url = settings.database_url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+sync_url = settings.database_url.replace("postgresql+asyncpg://", "postgresql+psycopg://").replace("ssl=require", "sslmode=require")
 config.set_main_option("sqlalchemy.url", sync_url)
 
 target_metadata = Base.metadata

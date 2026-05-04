@@ -32,3 +32,17 @@ class PolicyOut(BaseModel):
     role_name: str
     doc_id: str
     permission: str
+
+class GraphNode(BaseModel):
+    id: str
+    label: str
+    type: str
+
+class GraphEdge(BaseModel):
+    source: str
+    target: str
+    label: str
+
+class GraphData(BaseModel):
+    nodes: List[GraphNode]
+    links: List[GraphEdge]
