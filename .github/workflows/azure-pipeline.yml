@@ -77,6 +77,7 @@ jobs:
         export NEO4J_USER=neo4j
         export NEO4J_PASSWORD=neo4jpassword
         export DATABASE_URL=postgresql+asyncpg://secure:secure@localhost:5432/secure_audit
+        export CHROMA_HTTP_URL=http://localhost:8000
         export DOC_STORAGE_DIR=./data/documents
         alembic upgrade head
         PYTHONPATH=. python app/scripts/seed.py
