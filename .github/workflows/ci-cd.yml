@@ -30,8 +30,70 @@ jobs:
         cd backend
         PYTHONPATH=. pytest tests/ -v
 
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm install
+    - name: Run Frontend Unit Tests
+      run: |
+        cd frontend
+        npm run test:unit
+        
+  e2e-tests:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm install
+    - name: Install Playwright Browsers
+      run: |
+        cd frontend
+        npx playwright install --with-deps chromium
+    - name: Start Databases (Docker Compose)
+      run: docker-compose up -d postgres neo4j chromadb
+    - name: Wait for Databases
+      run: sleep 15
+    - name: Start Backend
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        export NEO4J_URI=bolt://localhost:7687
+        export NEO4J_USER=neo4j
+        export NEO4J_PASSWORD=neo4jpassword
+        export DATABASE_URL=postgresql+asyncpg://secure:secure@localhost:5432/secure_audit
+        alembic upgrade head
+        PYTHONPATH=. python app/scripts/seed.py
+        uvicorn app.main:app --host 0.0.0.0 --port 8080 &
+        sleep 5
+    - name: Start Frontend
+      run: |
+        cd frontend
+        export VITE_API_BASE_URL=http://localhost:8080
+        npm run dev &
+        sleep 5
+    - name: Run Playwright tests
+      run: |
+        cd frontend
+        npm run test:e2e
+        
   build-and-deploy-backend:
-    needs: [test-backend]
+    needs: [test-backend, e2e-tests]
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     
