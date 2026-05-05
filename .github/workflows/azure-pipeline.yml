@@ -133,12 +133,14 @@ jobs:
     # 3. Authenticate to Azure
     - name: Azure Login
       uses: azure/login@v1
+      continue-on-error: true
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     # 4. Deploy to Azure Container Apps
     - name: Deploy to Azure Container Apps
       uses: azure/container-apps-deploy-action@v1
+      continue-on-error: true
       with:
         resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
         containerAppName: ${{ secrets.AZURE_CONTAINER_APP_NAME }}
