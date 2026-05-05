@@ -65,7 +65,7 @@ jobs:
         cd frontend
         npx playwright install --with-deps chromium
     - name: Start Databases (Docker Compose)
-      run: docker-compose up -d postgres neo4j chromadb
+      run: docker compose up -d postgres neo4j chromadb
     - name: Wait for Databases
       run: sleep 15
     - name: Start Backend
