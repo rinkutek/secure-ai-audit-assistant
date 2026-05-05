@@ -19,6 +19,9 @@ jobs:
         with:
           submodules: true
           lfs: false
+      - name: Inject Vite Environment Variables
+        run: |
+          echo "VITE_API_BASE_URL=https://audit-backend-api.ashytree-69b7d7c7.eastus.azurecontainerapps.io" > frontend/.env.production
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
