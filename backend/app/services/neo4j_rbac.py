@@ -33,48 +33,38 @@ class RBACGraph:
     async def get_full_graph(self) -> dict:
         try:
             async with self._driver.session() as session:
-                cypher = '''
-                MATCH (n)-[r]->(m)
-                RETURN 
-                  id(n) as source_id, labels(n)[0] as source_label, properties(n) as source_props,
-                  type(r) as rel_type, properties(r) as rel_props,
-                  id(m) as target_id, labels(m)[0] as target_label, properties(m) as target_props
-                '''
-                res = await session.run(cypher)
-                nodes = {}
+                # 1. Fetch all nodes
+                node_res = await session.run("MATCH (n) RETURN id(n) as id, labels(n)[0] as label, properties(n) as props")
+                nodes = []
+                for record in await node_res.data():
+                    nid = f"{record['label']}_{record['id']}"
+                    props = dict(record['props'])
+                    if 'id' in props:
+                        props['app_id'] = props.pop('id')
+                    node_data = {"id": nid, "label": record['label'], "type": record['label'], **props}
+                    print(f"DEBUG: Neo4j Node {nid}: {node_data}")
+                    nodes.append(node_data)
+                
+                # 2. Fetch all relationships
+                rel_res = await session.run("MATCH (n)-[r]->(m) RETURN id(n) as sid, labels(n)[0] as slabel, id(m) as tid, labels(m)[0] as tlabel, type(r) as type, properties(r) as props")
                 links = []
-                async for record in res:
-                    sid = f"{record['source_label']}_{record['source_id']}"
-                    tid = f"{record['target_label']}_{record['target_id']}"
-                    
-                    if sid not in nodes:
-                        s_props = dict(record['source_props'])
-                        if 'id' in s_props:
-                            s_props['app_id'] = s_props.pop('id')
-                        nodes[sid] = {"id": sid, "label": record['source_label'], "type": record['source_label'], **s_props}
-                        
-                    if tid not in nodes:
-                        t_props = dict(record['target_props'])
-                        if 'id' in t_props:
-                            t_props['app_id'] = t_props.pop('id')
-                        nodes[tid] = {"id": tid, "label": record['target_label'], "type": record['target_label'], **t_props}
-                        
+                for record in await rel_res.data():
                     links.append({
-                        "source": sid,
-                        "target": tid,
-                        "label": record['rel_type'],
-                        **record['rel_props']
+                        "source": f"{record['slabel']}_{record['sid']}",
+                        "target": f"{record['tlabel']}_{record['tid']}",
+                        "label": record['type'],
+                        **record['props']
                     })
                 
-                # Deduplicate links if needed, but above will just grab all relationships
-                return {"nodes": list(nodes.values()), "links": links}
-        except Exception:
+                return {"nodes": nodes, "links": links}
+        except Exception as e:
+            print(f"Graph error: {e}")
             raise AppError("RBAC service unavailable", status_code=HTTP_503_SERVICE_UNAVAILABLE, code="RBAC_UNAVAILABLE")
 
-    async def add_document(self, doc_id: str):
+    async def add_document(self, doc_id: str, title: str = "Untitled"):
         try:
             async with self._driver.session() as session:
-                await session.run("MERGE (:Document {id:$id})", id=doc_id)
+                await session.run("MERGE (d:Document {id:$id}) SET d.title = $title", id=doc_id, title=title)
         except Exception as e:
             print(f"Neo4j doc error: {e}")
 
@@ -114,11 +104,11 @@ class RBACGraph:
         except Exception as e:
             print(f"Neo4j update user roles error: {e}")
 
-    async def add_policy(self, role_name: str, doc_id: str, permission: str):
+    async def add_policy(self, role_name: str, doc_id: str, permission: str, doc_title: str = "Untitled"):
         try:
             async with self._driver.session() as session:
                 await session.run("MERGE (:Role {name:$name})", name=role_name)
-                await session.run("MERGE (:Document {id:$id})", id=doc_id)
+                await session.run("MERGE (d:Document {id:$id}) SET d.title = $title", id=doc_id, title=doc_title)
                 await session.run("MATCH (r:Role {name:$name}),(d:Document {id:$id}) MERGE (r)-[:CAN_ACCESS {permission:$perm}]->(d)", name=role_name, id=doc_id, perm=permission)
         except Exception as e:
             print(f"Neo4j policy error: {e}")

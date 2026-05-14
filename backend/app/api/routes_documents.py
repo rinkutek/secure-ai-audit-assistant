@@ -43,7 +43,7 @@ async def upload_document(request: Request, file: UploadFile = File(...), title:
     await write_audit_log(db, user_id=user_id, action="DOCUMENT_UPLOAD", outcome="ALLOW", resource_ids=[doc_id], client_ip=client_ip, roles=roles)
     await db.commit()
     
-    await RBACGraph().add_document(doc_id=doc_id)
+    await RBACGraph().add_document(doc_id=doc_id, title=title)
     
     return UploadResponse(doc_id=doc_id, chunks_created=chunks_created)
 

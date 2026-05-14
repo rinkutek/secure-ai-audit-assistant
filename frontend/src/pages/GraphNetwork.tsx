@@ -16,6 +16,7 @@ export default function GraphNetwork() {
                 const token = getAccessToken()
                 if (!token) throw new Error("Please login as Admin to view the Graph.")
                 let res = await apiGraph(token)
+                console.log("DEBUG: Graph Data received:", res);
                 setData(res)
             } catch (e: any) {
                 setError(e.message || "Failed to load graph")
@@ -59,7 +60,7 @@ export default function GraphNetwork() {
                             nodeCanvasObject={(node: any, ctx: any, globalScale: any) => {
                                 const safeId = String(node.id || '');
                                 const displayId = safeId.includes('_') ? safeId.split('_').slice(1).join('_') : safeId;
-                                const label = node.email || node.name || (node.app_id ? node.app_id.substring(0, 8) + '...' : displayId);
+                                const label = node.email || node.name || node.title || (node.app_id ? node.app_id.substring(0, 8) + '...' : displayId);
                                 const fontSize = 14 / globalScale;
                                 ctx.font = `bold ${fontSize}px Inter, sans-serif`;
                                 const textWidth = ctx.measureText(label).width;

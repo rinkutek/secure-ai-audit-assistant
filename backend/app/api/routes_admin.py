@@ -6,7 +6,7 @@ from starlette.status import HTTP_404_NOT_FOUND
 from app.api.deps import get_db, require_admin
 from app.core.security import hash_password
 from app.core.exceptions import AppError
-from app.db.models import User, Role, UserRole, AccessPolicy
+from app.db.models import User, Role, UserRole, AccessPolicy, Document
 from app.schemas.admin import UserCreate, UserOut, UserUpdateRoles, RoleCreate, RoleOut, PolicyCreate, PolicyOut, GraphData
 from app.services.audit_log import write_audit_log
 from app.services.neo4j_rbac import RBACGraph
@@ -115,7 +115,10 @@ async def create_policy(payload: PolicyCreate, db: AsyncSession = Depends(get_db
     await write_audit_log(db, user_id=admin["user_id"], action="ADMIN_CREATE_POLICY", outcome="ALLOW", resource_ids=[payload.doc_id], client_ip="local", roles=admin.get("roles", []))
     await db.commit()
     
-    await RBACGraph().add_policy(role_name=p.role_name, doc_id=p.doc_id, permission=p.permission)
+    # Get doc title for Neo4j
+    doc = (await db.execute(select(Document).where(Document.id == p.doc_id))).scalar_one_or_none()
+    doc_title = doc.title if doc else "Untitled"
+    await RBACGraph().add_policy(role_name=p.role_name, doc_id=p.doc_id, permission=p.permission, doc_title=doc_title)
     
     return PolicyOut(id=p.id, role_name=p.role_name, doc_id=p.doc_id, permission=p.permission)
 
