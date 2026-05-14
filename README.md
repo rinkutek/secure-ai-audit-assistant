@@ -145,3 +145,18 @@ Inside containers:/data/documents
 
 Chunked content stored in PostgreSQL.
 Embeddings stored in ChromaDB.
+
+---
+
+## ☁️ Cloud Deployment (Microsoft Azure)
+
+If you are looking to deploy this application to production in the cloud, we provide full Infrastructure-as-Code (IaC) via Terraform targeted at Microsoft Azure. 
+
+The cloud deployment provisions:
+- Azure PostgreSQL Flexible Server
+- Azure Container Apps (Serverless Backend)
+- Azure Storage Accounts
+- Azure Log Analytics
+
+To deploy the application to Azure, please see the complete setup guide inside the `terraform/` folder:
+👉 **[Azure Deployment Guide](./terraform/README.md)**

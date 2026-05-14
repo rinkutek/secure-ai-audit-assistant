@@ -1,0 +1,91 @@
+name: Secure AI Audit Assistant CI/CD (GCP)
+
+on:
+  push:
+    branches: [ "main", "master", "test-branch" ]
+  pull_request:
+    branches: [ "main", "master", "test-branch" ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  SERVICE_NAME: secure-audit-api
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest httpx
+    - name: Run Backend Tests
+      run: |
+        cd backend
+        PYTHONPATH=. pytest tests/ -v
+
+  deploy:
+    needs: [test-backend]
+    runs-on: ubuntu-latest
+    if: contains(fromJson('["refs/heads/main", "refs/heads/master", "refs/heads/test-branch"]'), github.ref)
+    
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    # 1. Authenticate to Google Cloud using Workload Identity Federation
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: '${{ secrets.WIF_PROVIDER }}'
+        service_account: '${{ secrets.WIF_SERVICE_ACCOUNT }}'
+
+    # 2. Build and push backend to Artifact Registry
+    - name: 'Docker auth'
+      run: |-
+        gcloud auth configure-docker ${REGION}-docker.pkg.dev
+        
+    - name: 'Build and push backend container'
+      run: |-
+        cd backend
+        docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/services/${SERVICE_NAME}:${{ github.sha }} .
+        docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/services/${SERVICE_NAME}:${{ github.sha }}
+
+    # 3. Deploy to Cloud Run
+    - name: 'Deploy to Cloud Run'
+      uses: 'google-github-actions/deploy-cloudrun@v1'
+      with:
+        service: '${{ env.SERVICE_NAME }}'
+        region: '${{ env.REGION }}'
+        image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/services/${{ env.SERVICE_NAME }}:${{ github.sha }}'
+
+    # 4. Build and Deploy Frontend to Firebase Hosting
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    - name: Install dependencies and build frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+      env:
+        # Inject the deployed Cloud Run URL into the Vite build step
+        VITE_API_BASE_URL: ${{ steps.deploy.outputs.url }}
+        
+    - name: Deploy to Firebase Hosting
+      run: |
+        cd frontend
+        npx firebase-tools deploy --only hosting --token "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" --project "${{ secrets.GCP_PROJECT_ID }}" --non-interactive
+

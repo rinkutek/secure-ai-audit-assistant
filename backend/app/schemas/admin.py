@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import List
 
 class UserCreate(BaseModel):
@@ -12,6 +12,9 @@ class UserOut(BaseModel):
     roles: List[str]
     is_active: bool
 
+class UserUpdateRoles(BaseModel):
+    roles: List[str]
+
 class RoleCreate(BaseModel):
     name: str = Field(min_length=2, max_length=64)
 
@@ -22,7 +25,7 @@ class RoleOut(BaseModel):
 class PolicyCreate(BaseModel):
     role_name: str = Field(min_length=2, max_length=64)
     doc_id: str
-    permission: str = Field(default="READ", pattern="^(READ)$")
+    permission: str = Field(default="READ", pattern="^(READ|WRITE)$")
 
 class PolicyOut(BaseModel):
     id: str
@@ -31,9 +34,15 @@ class PolicyOut(BaseModel):
     permission: str
 
 class GraphNode(BaseModel):
+    model_config = ConfigDict(extra='allow')
+    
     id: str
     label: str
     type: str
+    email: str | None = None
+    name: str | None = None
+    title: str | None = None
+    app_id: str | None = None
 
 class GraphEdge(BaseModel):
     source: str

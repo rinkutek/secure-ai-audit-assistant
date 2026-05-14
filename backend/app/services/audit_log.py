@@ -23,8 +23,9 @@ async def _last_hash(session: AsyncSession) -> str:
 async def write_audit_log(session: AsyncSession, *, user_id: str, action: str, outcome: str, resource_ids: List[str], client_ip: str, roles: List[str]) -> AuditLog:
     try:
         prev = await _last_hash(session)
+        now = datetime.now(timezone.utc).replace(microsecond=0)
         payload = {
-            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "timestamp_utc": now.isoformat(),
             "user_id": user_id,
             "action": action,
             "outcome": outcome,
@@ -34,7 +35,7 @@ async def write_audit_log(session: AsyncSession, *, user_id: str, action: str, o
         }
         curr = compute_hash(prev, payload)
         row = AuditLog(
-            timestamp_utc=datetime.now(timezone.utc),
+            timestamp_utc=now,
             user_id=user_id,
             action=action,
             outcome=outcome,

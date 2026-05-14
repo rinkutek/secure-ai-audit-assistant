@@ -19,6 +19,19 @@ STORAGE_ACCOUNT_NAME="stsecureaudit$RANDOM"
 SHARE_NAME_CHROMA="chromadb"
 SHARE_NAME_NEO4J="neo4jdata"
 
+# LLM Configuration
+MOCK_MODE="false"
+OPENAI_API_KEY="your-openai-api-key-here" # REPLACE THIS WITH YOUR REAL KEY
+OPENAI_CHAT_MODEL="gpt-4o-mini"
+
+# Azure OpenAI Configuration (Alternative to OpenRouter)
+AZURE_OPENAI_ENDPOINT=""
+AZURE_OPENAI_KEY=""
+AZURE_OPENAI_DEPLOYMENT="audit-llm"
+AZURE_OPENAI_API_VERSION="2024-02-15-preview"
+
+
+
 echo "Deploying to Resource Group: $RESOURCE_GROUP in $LOCATION"
 
 # ==========================================
@@ -136,7 +149,16 @@ az containerapp create \
       CHROMA_HTTP_URL="http://chromadb:80" \
       NEO4J_URI="bolt://neo4j:7687" \
       NEO4J_USER="neo4j" \
-      NEO4J_PASSWORD="SecureNeo4jPassword123"
+      NEO4J_PASSWORD="SecureNeo4jPassword123" \
+      MOCK_MODE="$MOCK_MODE" \
+      MOCK_EMBEDDINGS="$MOCK_EMBEDDINGS" \
+      OPENAI_API_KEY="$OPENAI_API_KEY" \
+      OPENAI_CHAT_MODEL="$OPENAI_CHAT_MODEL" \
+      CORS_ORIGINS="*" \
+      AZURE_OPENAI_ENDPOINT="$AZURE_OPENAI_ENDPOINT" \
+      AZURE_OPENAI_KEY="$AZURE_OPENAI_KEY" \
+      AZURE_OPENAI_DEPLOYMENT="$AZURE_OPENAI_DEPLOYMENT" \
+      AZURE_OPENAI_API_VERSION="$AZURE_OPENAI_API_VERSION"
 
 API_FQDN=$(az containerapp show -n audit-backend-api -g $RESOURCE_GROUP --query properties.configuration.ingress.fqdn -o tsv)
 
