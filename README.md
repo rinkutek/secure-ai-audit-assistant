@@ -38,110 +38,267 @@ Everything runs locally using Docker Compose.
 
 ---
 
-# 🚀 Quick Start (Local Setup)
+# 🚀 Local Deployment
 
 ## 1) Prerequisites
 
 Install:
 
-- Docker Desktop (includes Docker Compose v2)
+- Docker Desktop, including Docker Compose v2
 - Git
+- Optional: Ollama, only if you want real local LLM responses instead of mock mode
 
-Verify installation:
-
-```bash
-docker --version
-docker compose version
-```
+Verify Docker:
 
 ```bash
 docker --version
 docker compose version
+docker info
 ```
 
-## 2) Create Environment File
+If `docker info` cannot connect to the Docker daemon, start Docker Desktop first.
+
+## 2) Create the Environment File
+
+```bash
 cp .env.example .env
+```
 
-## 3) Generate Secure JWT Signing Key (Required)
+Generate a local JWT signing key:
+
+```bash
 openssl rand -hex 32
-Paste output into .env: JWT_SIGNING_KEY=<your-generated-key>
+```
 
-## 4) Start the Full Stack
+Paste the generated value into `.env`:
+
+```env
+JWT_SIGNING_KEY=<your-generated-key>
+```
+
+## 3) Choose LLM Mode
+
+### Option A: Offline mock mode
+
+This is the easiest local setup and does not require Ollama or internet access.
+
+In `.env`:
+
+```env
+MOCK_MODE=true
+```
+
+### Option B: Ollama local model mode
+
+Install and start Ollama, then pull the chat and embedding models:
+
+```bash
+ollama pull llama3.2
+ollama pull nomic-embed-text
+```
+
+In `.env` for Docker Compose:
+
+```env
+MOCK_MODE=false
+OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+OPENAI_API_KEY=local-dev
+OPENAI_CHAT_MODEL=llama3.2
+OPENAI_EMBEDDING_MODEL=nomic-embed-text
+```
+
+If you run the backend directly on your host machine instead of inside Docker, use:
+
+```env
+OPENAI_BASE_URL=http://localhost:11434/v1
+```
+
+## 4) Start the Full Local Stack
+
 ```bash
 docker compose up --build -d
 docker compose ps
 ```
 
-Expected:
+Expected local services:
 
-Service	Port
-Frontend	http://localhost:5173
+| Service | URL / Port |
+| --- | --- |
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8080 |
+| API Docs | http://localhost:8080/docs |
+| Neo4j Browser | http://localhost:7474 |
+| ChromaDB | http://localhost:8000 |
+| PostgreSQL | localhost:5432 |
 
-API	http://localhost:8081
+Neo4j login:
 
-Neo4j	http://localhost:7474
+```text
+Username: neo4j
+Password: neo4jpassword
+```
 
-ChromaDB	http://localhost:8000
+## 5) Run Migrations
 
-PostgreSQL	5432
-
-## 5) Database Setup
 ```bash
 docker compose exec api bash -lc "alembic upgrade head"
 ```
 
-## 6) Seed Sample Data
-docker compose exec api bash -lc "python -m app.scripts.seed"
+## 6) Seed Sample Users, Documents, and RBAC Policies
 
-Seeded users and their credentials will be printed
+```bash
+docker compose exec api bash -lc "python app/scripts/seed.py"
+```
 
+Seeded users:
 
-## 🧠 Using the Application
-🔐 Login
-Open: http://localhost:5173
+```text
+admin@example.com / AdminPass123!
+auditor@example.com / AuditorPass123!
+viewer@example.com / ViewerPass123!
+```
 
+## 7) Open and Verify the App
 
-## 🔎 Run a Query (Hybrid RAG)
+Open:
 
-Example: What are the requirements for SOC 2 evidence retention?
+```text
+http://localhost:5173
+```
 
-You should see:
+Login as:
 
-Grounded answer
-Citations
-Retrieval debug counts
+```text
+admin@example.com / AdminPass123!
+```
 
-## 🛡 RBAC Demonstration
+Try this query:
 
-Login as viewer@example.com
-
-Ask a restricted question (e.g., incident response policy).
+```text
+What is the SOC 2 evidence retention policy?
+```
 
 Expected result:
 
-No results (insufficient access)
-No snippet leakage.
-No citations.
+- An answer grounded in the seeded SOC 2 document
+- Document citations
+- Retrieval debug counts
+- No `503 Service Unavailable`
 
-RBAC is enforced BEFORE LLM execution.
+## 🛡 RBAC Demonstration
+
+Login as:
+
+```text
+viewer@example.com / ViewerPass123!
+```
+
+Ask a question about a document that the viewer role is not allowed to access.
+
+Expected result:
+
+```text
+No results (insufficient access)
+```
+
+RBAC is enforced before LLM execution, so unauthorized snippets should not be sent to the model or shown in citations.
 
 ## 🧾 Audit Log Verification
 
-Navigate to: http://localhost:5173/audit-logs
+Open:
 
-Click Verify Chain
+```text
+http://localhost:5173/audit-logs
+```
 
-Expected: Verification: OK
-This confirms SHA-256 hash chain integrity.
+Click **Verify Chain**.
 
-## 📂 Where Documents Are Stored
+Expected result:
 
-Raw documents: ./data/documents
+```text
+Verification: OK
+```
 
-Inside containers:/data/documents
+This confirms the SHA-256 audit hash chain has not been tampered with.
 
-Chunked content stored in PostgreSQL.
-Embeddings stored in ChromaDB.
+## 📂 Where Data Is Stored
+
+Raw uploaded documents:
+
+```text
+./data/documents
+```
+
+Inside the backend container:
+
+```text
+/data/documents
+```
+
+Structured data is stored in PostgreSQL, RBAC graph data is stored in Neo4j, and document embeddings are stored in ChromaDB.
+
+## 🧪 Running Tests Locally
+
+Run the full test suite:
+
+```bash
+./run_all_tests.sh
+```
+
+Backend unit tests only:
+
+```bash
+cd backend
+PYTHONPATH=. python3 -m pytest tests/ --ignore=tests/integration -v
+cd ..
+```
+
+Frontend unit tests only:
+
+```bash
+cd frontend
+npm run test:unit
+cd ..
+```
+
+Playwright end-to-end tests:
+
+```bash
+cd frontend
+VITE_API_BASE_URL=http://localhost:8080 npm run test:e2e
+cd ..
+```
+
+## 🧯 Troubleshooting
+
+### Docker daemon is not running
+
+If Docker commands fail with:
+
+```text
+Cannot connect to the Docker daemon
+```
+
+Start Docker Desktop, wait until it is ready, then run:
+
+```bash
+docker info
+```
+
+### ChromaDB embedding dimension mismatch
+
+If `/query` returns `503 Service Unavailable` after switching between mock mode and Ollama mode, ChromaDB may still contain embeddings from the old mode. Mock embeddings use `384` dimensions, while `nomic-embed-text` uses `768`.
+
+Reset local Docker volumes and seed again:
+
+```bash
+docker compose down -v
+docker compose up --build -d
+docker compose exec api bash -lc "alembic upgrade head"
+docker compose exec api bash -lc "python app/scripts/seed.py"
+```
+
+This removes local dev database/vector data and recreates it using the current `.env` settings.
 
 ---
 
