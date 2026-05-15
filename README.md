@@ -131,11 +131,11 @@ Expected local services:
 | ChromaDB | http://localhost:8000 |
 | PostgreSQL | localhost:5432 |
 
-Neo4j login:
+Neo4j local database login:
 
 ```text
 Username: neo4j
-Password: neo4jpassword
+Password: value of NEO4J_PASSWORD in your local .env
 ```
 
 ## 5) Run Migrations
@@ -150,13 +150,11 @@ docker compose exec api bash -lc "alembic upgrade head"
 docker compose exec api bash -lc "python app/scripts/seed.py"
 ```
 
-Seeded users:
+Seeded local demo users are created for the `admin`, `auditor`, and `viewer` roles.
 
-```text
-admin@example.com / AdminPass123!
-auditor@example.com / AuditorPass123!
-viewer@example.com / ViewerPass123!
-```
+Passwords are intentionally not documented in this README. The seed script is for local development and testing only.
+
+Do not run the seed script or use demo credentials in production/cloud environments.
 
 ## 7) Open and Verify the App
 
@@ -166,11 +164,7 @@ Open:
 http://localhost:5173
 ```
 
-Login as:
-
-```text
-admin@example.com / AdminPass123!
-```
+Login with a user created through your local seed/admin process.
 
 Try this query:
 
@@ -187,11 +181,7 @@ Expected result:
 
 ## 🛡 RBAC Demonstration
 
-Login as:
-
-```text
-viewer@example.com / ViewerPass123!
-```
+Login as a user with only the `viewer` role.
 
 Ask a question about a document that the viewer role is not allowed to access.
 
