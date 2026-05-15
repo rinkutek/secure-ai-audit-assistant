@@ -1,0 +1,52 @@
+{
+  "test_cases": [
+    {
+      "id": "TC-001",
+      "query": "Who can upload and delete documents?",
+      "expected_answer_contains": [
+        "Admin",
+        "upload",
+        "delete"
+      ],
+      "source_file": "02_access_control_policy.md"
+    },
+    {
+      "id": "TC-002",
+      "query": "What are the high severity audit findings?",
+      "expected_answer_contains": [
+        "F-001",
+        "F-003",
+        "High"
+      ],
+      "source_file": "03_sample_audit_findings.csv"
+    },
+    {
+      "id": "TC-003",
+      "query": "What is the session timeout requirement?",
+      "expected_answer_contains": [
+        "30 minutes"
+      ],
+      "source_file": "02_access_control_policy.md"
+    },
+    {
+      "id": "TC-004",
+      "query": "What systems are in scope for the audit?",
+      "expected_answer_contains": [
+        "PostgreSQL",
+        "Chroma",
+        "Neo4j",
+        "Azure Container Apps"
+      ],
+      "source_file": "01_internal_audit_plan.md"
+    },
+    {
+      "id": "TC-005",
+      "query": "What should be done about API key storage?",
+      "expected_answer_contains": [
+        "Azure Key Vault",
+        "rotate"
+      ],
+      "source_file": "03_sample_audit_findings.csv"
+    }
+  ]
+}

@@ -42,6 +42,9 @@ Everything runs locally using Docker Compose.
 
 ## 1) Prerequisites
 
+> **☁️ Migrating to the Cloud?** 
+> If you want to deploy this stack to Microsoft Azure using a cloud-native serverless architecture, see the [Azure Migration Guide](./AZURE_MIGRATION.md) and the `azure-deploy.sh` script.
+
 Install:
 
 - Docker Desktop (includes Docker Compose v2)
@@ -142,3 +145,18 @@ Inside containers:/data/documents
 
 Chunked content stored in PostgreSQL.
 Embeddings stored in ChromaDB.
+
+---
+
+## ☁️ Cloud Deployment (Microsoft Azure)
+
+If you are looking to deploy this application to production in the cloud, we provide full Infrastructure-as-Code (IaC) via Terraform targeted at Microsoft Azure. 
+
+The cloud deployment provisions:
+- Azure PostgreSQL Flexible Server
+- Azure Container Apps (Serverless Backend)
+- Azure Storage Accounts
+- Azure Log Analytics
+
+To deploy the application to Azure, please see the complete setup guide inside the `terraform/` folder:
+👉 **[Azure Deployment Guide](./terraform/README.md)**

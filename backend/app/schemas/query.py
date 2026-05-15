@@ -3,6 +3,7 @@ from typing import List, Optional
 
 class QueryRequest(BaseModel):
     query: str = Field(min_length=1, max_length=512)
+    session_id: Optional[str] = None
 
 class Citation(BaseModel):
     doc_id: str
@@ -19,3 +20,4 @@ class QueryResponse(BaseModel):
     answer: str
     citations: List[Citation]
     debug: QueryDebug
+    session_id: str

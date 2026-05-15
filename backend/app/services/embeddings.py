@@ -44,4 +44,7 @@ class OpenAICompatibleEmbeddingProvider(EmbeddingProvider):
             raise AppError("Embedding provider unavailable", status_code=HTTP_503_SERVICE_UNAVAILABLE, code="EMBEDDINGS_UNAVAILABLE")
 
 def get_embedding_provider() -> EmbeddingProvider:
-    return MockEmbeddingProvider() if settings.mock_mode else OpenAICompatibleEmbeddingProvider()
+    # Use mock embeddings if MOCK_EMBEDDINGS is true, or if we are in general MOCK_MODE
+    if getattr(settings, 'mock_embeddings', False) or settings.mock_mode:
+        return MockEmbeddingProvider()
+    return OpenAICompatibleEmbeddingProvider()

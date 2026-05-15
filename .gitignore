@@ -19,6 +19,13 @@ dist/
 # local data
 data/
 *.log
+token.json
 
 # docker
 **/.docker/
+
+# terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
